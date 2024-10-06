@@ -16,7 +16,7 @@ import {
 } from "react-bootstrap";
 
 const QuizCRUD = () => {
-  const [quizzes, setQuizzes] = useState([]); // untuk menyimpan data yang kita ambil dari database
+  const [quizzes, setQuizzes] = useState([]); // Menyimpan data quiz
   const [formData, setFormData] = useState({
     question: "",
     option1: "",
@@ -24,15 +24,12 @@ const QuizCRUD = () => {
     option3: "",
     option4: "",
     ans: "",
-  }); // untuk menyimpan inputan user
-  const [editingId, setEditingId] = useState(null); // untuk menyimpan id yg dibawa
-  const [errors, setErrors] = useState({}); // untuk menyimpan pesan validasi
-  const [alert, setAlert] = useState({
-    show: false,
-    messsage: "",
-    variant: "",
-  });
+  }); // Menyimpan data form
+  const [editingId, setEditingId] = useState(null); // Menyimpan ID yang sedang di-edit
+  const [errors, setErrors] = useState({}); // Menyimpan pesan error
+  const [alert, setAlert] = useState({ show: false, message: "", variant: "" }); // Menyimpan alert
 
+  // Memuat data dari API saat komponen pertama kali dirender
   useEffect(() => {
     loadQuizzes();
   }, []);
@@ -40,12 +37,13 @@ const QuizCRUD = () => {
   const loadQuizzes = async () => {
     try {
       const response = await fetchQuizzes();
-      setQuizzes(response.data.quizzes || []);
+      setQuizzes(response.data.quizzes || []); // Akses data dari response.data.quizzes
     } catch (error) {
-      console.error("error ketika mengambil data", error);
+      console.error("Error fetching quizzes:", error);
     }
   };
 
+  // Fungsi validasi form
   const validateForm = () => {
     const newErrors = {};
 
@@ -55,34 +53,36 @@ const QuizCRUD = () => {
     if (!formData.option3) newErrors.option3 = "Option 3 is required";
     if (!formData.option4) newErrors.option4 = "Option 4 is required";
     if (!formData.ans || ![1, 2, 3, 4].includes(Number(formData.ans)))
-      newErrors.ans = "Jawaban harus antara 1 samapi 4";
+      newErrors.ans = "Answer must be a number between 1 and 4";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  //   Mode Edit data
+  // Meng-handle perubahan input form
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  //  Mode input data
+  // Meng-handle form submit untuk menambahkan atau memperbarui quiz
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+
+    if (!validateForm()) return; // Validasi form
 
     try {
       if (editingId) {
         await updateQuiz(editingId, formData);
         setAlert({
           show: true,
-          message: "Quiz berhasil diupdate",
+          message: "Quiz updated successfully",
           variant: "success",
         });
       } else {
         await createQuiz(formData);
         setAlert({
           show: true,
-          message: "Quiz berhasil ditambahkan",
+          message: "Quiz created successfully",
           variant: "success",
         });
       }
@@ -99,13 +99,14 @@ const QuizCRUD = () => {
     } catch (error) {
       setAlert({
         show: true,
-        message: "Gagal menyimpan atau mengedit quiz",
+        message: "Error saving quiz",
         variant: "danger",
       });
-      console.error("Error menyimpan/mengupdate quiz", error);
+      console.error("Error creating/updating quiz:", error);
     }
   };
 
+  // Meng-handle edit quiz
   const handleEdit = (quiz) => {
     setFormData({
       question: quiz.question,
@@ -115,22 +116,23 @@ const QuizCRUD = () => {
       option4: quiz.option4,
       ans: quiz.ans,
     });
-    setEditingId(quiz.id);
+    setEditingId(quiz.id); // Gunakan quiz.id sebagai editingId
   };
 
+  // Meng-handle hapus quiz
   const handleDelete = async (id) => {
     try {
       await deleteQuiz(id);
       setAlert({
         show: true,
-        message: "Quiz berhasil dihapus",
+        message: "Quiz deleted successfully",
         variant: "success",
       });
       loadQuizzes();
     } catch (error) {
       setAlert({
         show: true,
-        message: "Gagal menghapus quiz",
+        message: "Error deleting quiz",
         variant: "danger",
       });
       console.error("Error deleting quiz:", error);
@@ -142,6 +144,8 @@ const QuizCRUD = () => {
       <Row className="justify-content-center">
         <Col md={8}>
           <h1 className="text-center mb-4">Quiz CRUD with Axios</h1>
+
+          {/* Alert for feedback */}
           {alert.show && (
             <Alert
               variant={alert.variant}
@@ -152,13 +156,14 @@ const QuizCRUD = () => {
             </Alert>
           )}
 
+          {/* Form untuk menambah atau mengedit quiz */}
           <Form onSubmit={handleSubmit} className="mb-4">
             <Form.Group controlId="formQuestion">
               <Form.Label>Question</Form.Label>
-              <Form.control
+              <Form.Control
                 type="text"
                 name="question"
-                placeholder="Masukkan Pertanyaan"
+                placeholder="Enter question"
                 value={formData.question}
                 onChange={handleChange}
                 isInvalid={!!errors.question}
@@ -167,38 +172,119 @@ const QuizCRUD = () => {
                 {errors.question}
               </Form.Control.Feedback>
             </Form.Group>
-            {/* Input untuk option1 hingga 4 */}
+
+            <Form.Group controlId="formOption1">
+              <Form.Label>Option 1</Form.Label>
+              <Form.Control
+                type="text"
+                name="option1"
+                placeholder="Enter option 1"
+                value={formData.option1}
+                onChange={handleChange}
+                isInvalid={!!errors.option1}
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.option1}
+              </Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group controlId="formOption2">
+              <Form.Label>Option 2</Form.Label>
+              <Form.Control
+                type="text"
+                name="option2"
+                placeholder="Enter option 2"
+                value={formData.option2}
+                onChange={handleChange}
+                isInvalid={!!errors.option2}
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.option2}
+              </Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group controlId="formOption3">
+              <Form.Label>Option 3</Form.Label>
+              <Form.Control
+                type="text"
+                name="option3"
+                placeholder="Enter option 3"
+                value={formData.option3}
+                onChange={handleChange}
+                isInvalid={!!errors.option3}
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.option3}
+              </Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group controlId="formOption4">
+              <Form.Label>Option 4</Form.Label>
+              <Form.Control
+                type="text"
+                name="option4"
+                placeholder="Enter option 4"
+                value={formData.option4}
+                onChange={handleChange}
+                isInvalid={!!errors.option4}
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.option4}
+              </Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group controlId="formAns">
+              <Form.Label>Answer (1-4)</Form.Label>
+              <Form.Control
+                type="number"
+                name="ans"
+                placeholder="Enter correct answer"
+                value={formData.ans}
+                onChange={handleChange}
+                isInvalid={!!errors.ans}
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.ans}
+              </Form.Control.Feedback>
+            </Form.Group>
+
             <Button variant="primary" type="submit" className="mt-3">
               {editingId ? "Update" : "Create"}
             </Button>
           </Form>
 
+          {/* Tabel untuk menampilkan daftar quiz */}
           <Table striped bordered hover>
             <thead>
               <tr>
+                <th>#</th>
                 <th>Question</th>
                 <th>Option 1</th>
                 <th>Option 2</th>
                 <th>Option 3</th>
                 <th>Option 4</th>
-                <th>Answare</th>
+                <th>Answer</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {quizzes.map((quiz) => (
+              {quizzes.map((quiz, index) => (
                 <tr key={quiz.id}>
+                  <td>{index + 1}</td>
                   <td>{quiz.question}</td>
                   <td>{quiz.option1}</td>
                   <td>{quiz.option2}</td>
                   <td>{quiz.option3}</td>
                   <td>{quiz.option4}</td>
-                  <td>{quiz.answare}</td>
+                  <td>{quiz.ans}</td>
                   <td>
-                    <Button variant="warning" onClick={() => handleEdit(quiz)}>
+                    <Button
+                      className="mb-2"
+                      variant="warning"
+                      onClick={() => handleEdit(quiz)}
+                    >
                       Edit
-                    </Button>
-                    {""}
+                    </Button>{" "}
                     <Button
                       variant="danger"
                       onClick={() => handleDelete(quiz.id)}
